@@ -33,8 +33,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset('assets/icons/main.png',height: 300,),
-            SizedBox(height: 10,),
+            Container(
+              margin: EdgeInsets.only(left: 20),
+                child: Image.asset('assets/icons/main.png',height: 200,)),
+            // SizedBox(height: 10,),
             Text('Weather app',
               style: TextStyle(color: Colors.white,
                 fontSize: 40,
@@ -45,11 +47,10 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               color: Colors.white70,
               fontSize: 16,
             ),),
-            SizedBox(height: 30,),
+            SizedBox(height: 50,),
 
-            ElevatedButton(onPressed: ()=>{
-
-              Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen()))
+            ElevatedButton(onPressed: (){
+              Navigator.push(context, MaterialPageRoute(builder: (context) => HomeScreen()));
             },style: ElevatedButton.styleFrom(
               backgroundColor: Colors.blueAccent,
               shape: CircleBorder(),
