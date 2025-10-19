@@ -261,11 +261,6 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
 Widget buildCurrentWeather() {
-
-  final current = _weatherData!['current'];
-  final temp = current['temp'].toStringAsFixed(1);
-  final condition = current['weather'][0]['description'];
-  final icon = current['weather'][0]['icon'];
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
