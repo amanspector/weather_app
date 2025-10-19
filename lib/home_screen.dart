@@ -17,6 +17,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _temperature = "--°C";
   String _condition = "Loading...";
   bool _isLoading = true;
+  String _humidity ='--';
+  String _wind_speed='--';
+  String _pressure ='--';
   @override
   void initState() {
     super.initState();
@@ -59,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Placemark> placemarks = await placemarkFromCoordinates(position.latitude, position.longitude);
     String city = placemarks.isNotEmpty?placemarks[0].locality??"unknown" : "unknown";
     final weatherdata = await services_api().fetchWeather(position.latitude, position.longitude);
-
+    print("Weather data: $weatherdata");
     // if(weatherdata!= null){
     //   setState(() {
     //     _city = city;
@@ -85,15 +88,21 @@ class _HomeScreenState extends State<HomeScreen> {
     // }
 
     if (weatherdata != null) {
-      var kl = weatherdata['main']['temp'];
-      var cel = kl - 273.15;
-      var condition = weatherdata['weather'][0]['main'];
+      var current = weatherdata['current'];
+      var tem = current['temp'];
+      var condition = current['weather'][0]['description'];
+      var humidity = current['humidity'];
+      var wind_speed = current['wind_speed'];
+      var pressure = current['pressure'];
 
       setState(() {
         _city = city;
         _temperature =
-        (cel is num) ? "${cel.toStringAsFixed(1)}°C" : "--°C";
+        (tem is num) ? "${tem.toStringAsFixed(1)}°C" : "--°C";
         _condition = condition ?? "--";
+        _humidity = humidity.toString();
+        _wind_speed = wind_speed.toString();
+        _pressure = pressure.toString();
         _isLoading = false;
       });
     } else {
@@ -101,6 +110,9 @@ class _HomeScreenState extends State<HomeScreen> {
         _city = city;
         _temperature = "--°C";
         _condition = "Unable to fetch weather";
+        _humidity ='--';
+        _wind_speed='--';
+        _pressure ='--';
         _isLoading = false;
       });
     }
@@ -109,6 +121,9 @@ class _HomeScreenState extends State<HomeScreen> {
   _city = "Error fetching location";
   _temperature = "--°C";
   _condition = "Error";
+  _humidity ='Error';
+  _wind_speed='Error';
+  _pressure ='Error';
   _isLoading = false;
   });
   print("Error in _getCurrentLocation: $e");
@@ -168,7 +183,50 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
 
-                SizedBox(height: 40),
+                SizedBox(height: 10),
+
+                Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Icon(Icons.opacity,color: Colors.blueAccent,),
+                        Text(_humidity,style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 40,
+                          fontWeight: FontWeight.bold,
+                        ),),
+                ],
+                    ),
+                  ],
+                ),
+
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.air,color: Colors.white,),
+                    Text(_wind_speed,style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),),
+
+                  ],
+                ),
+                SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.speed,color: Colors.redAccent,),
+                    Text(_pressure,style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 40,
+                      fontWeight: FontWeight.bold,
+                    ),),
+                  ],
+                ),
 
 
                 ElevatedButton.icon(
