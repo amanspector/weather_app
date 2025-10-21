@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String _humidity ='--';
   String _wind_speed='--';
   String _pressure ='--';
+  List<Map<String, dynamic>> _next24Hours = [];
   Map<String, dynamic>? _weatherData;
   @override
   void initState() {
@@ -91,13 +92,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (weatherdata != null) {
       var current = weatherdata['current'];
-      var hourly = weatherdata['hourly'];
+      var hourlyData = weatherdata['hourly'];
       var daily = weatherdata['daily'];
       var tem = current['temp'];
       var condition = current['weather'][0]['description'];
       var humidity = current['humidity'];
       var wind_speed = current['wind_speed'];
       var pressure = current['pressure'];
+      var next24Hours = getNext24Hours(hourlyData);
 
       setState(() {
         _city = city;
@@ -107,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
         _humidity = humidity.toString();
         _wind_speed = wind_speed.toString();
         _pressure = pressure.toString();
+        _next24Hours = next24Hours;
         _isLoading = false;
       });
     } else {
@@ -144,6 +147,8 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 buildCurrentWeather(),
+                // const SizedBox(height: 20),
+                // buildHourlyForcast(),
                 const SizedBox(height: 20),
                 buildTodayForecast(),
                 const SizedBox(height: 20),
@@ -281,20 +286,14 @@ Widget buildCurrentWeather() {
           style: const TextStyle(color: Colors.white70, fontSize: 16),
         ),
         Container(
-          // decoration: BoxDecoration(
-          //   shape: BoxShape.circle,
-          //   gradient: RadialGradient(colors: [Colors.yellow ,Colors.orangeAccent],
-          //   radius: 0.8),
-          //
-          // ),
-          padding: EdgeInsets.all(45),
+          padding: EdgeInsets.all(30),
           child: Icon(
             Icons.wb_sunny_rounded,
             size: 100,
             color: Colors.orangeAccent,
           ),
         ),
-        SizedBox(height: 25,),
+        // SizedBox(height: 5,),
         Text(_temperature,style: TextStyle(
           color: Colors.white,
           fontSize: 64,
@@ -304,40 +303,139 @@ Widget buildCurrentWeather() {
     );
 }
 
-  Widget buildTodayForecast() {
+Widget buildTodayForecast(){
+    if(_next24Hours.isEmpty){
+      return SizedBox();
+    }
+    String? lastDate;
+
     return Container(
-      decoration: BoxDecoration(
+      decoration:BoxDecoration(
         color: const Color(0xFF1E2228),
         borderRadius: BorderRadius.circular(20),
-      ),
-      padding: const EdgeInsets.all(16),
+      ) ,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+
+      // height: 150,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+
         children: [
-          const Text(
-            "TODAY’S FORECAST",
-            style: TextStyle(
+         Text(
+              "NEXT 24 HOURS FORECAST",
+              style: TextStyle(
                 color: Colors.white70,
                 fontSize: 14,
-                fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                forecastItem("9:00 AM", Icons.wb_sunny, "25°"),
-                const SizedBox(width: 16),
-                forecastItem("12:00 PM", Icons.wb_sunny, "28°"),
-                const SizedBox(width: 16),
-                forecastItem("3:00 PM", Icons.wb_sunny, "33°"),
-              ],
+                fontWeight: FontWeight.w500,
+              ),
             ),
+          SizedBox(height: 5,),
+          SizedBox(
+            height: 120,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+                itemCount: _next24Hours.length,
+                itemBuilder: (context,index) {
+                final hour = _next24Hours[index];
+                final time = DateTime.fromMillisecondsSinceEpoch(hour['dt']*1000);
+                final hourString = "${time.hour % 12 == 0 ? 12 : time.hour % 12} ${time.hour >= 12 ? 'PM' : 'AM'}";
+                final dateString = "${time.day}/${time.month}";
+                final icon = hour['weather'][0]['icon'];
+                final temp = hour['temp'].toStringAsFixed(1);
+                return Container(
+                    width: 80,
+                    margin: const EdgeInsets.only(right: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(dateString, style:  TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),),
+                        Text(hourString, style: TextStyle(color: Colors.white,fontSize: 14)),
+                        SizedBox(height: 5,),
+                        Image.network(
+                          "https://openweathermap.org/img/wn/$icon.png",
+                          height: 40,
+                        ),
+                        Text("$temp°C", style: const TextStyle(color: Colors.white)),
+                      ],
+                    ),
+                );
+            }),
           ),
         ],
       ),
     );
-  }
+}
+
+  // Widget buildTodayForecast() {
+  //   return Container(
+  //     height: 120,
+  //     decoration: BoxDecoration(
+  //       color: const Color(0xFF1E2228),
+  //       borderRadius: BorderRadius.circular(20),
+  //     ),
+  //     padding: const EdgeInsets.all(16),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Text(
+  //           "NEXT 24 HOURS FORECAST",
+  //           style: TextStyle(
+  //               color: Colors.white70,
+  //               fontSize: 14,
+  //               fontWeight: FontWeight.w500),
+  //         ),
+  //         const SizedBox(height: 12),
+  //         Container(
+  //           child: ListView.builder(
+  //               scrollDirection: Axis.horizontal,
+  //               itemCount: _next24Hours.length,
+  //               itemBuilder: (context,index) {
+  //                 final hour = _next24Hours[index];
+  //                 final time = DateTime.fromMillisecondsSinceEpoch(hour['dt']*1000);
+  //                 // Hour in 12-hour format
+  //                 final hourString = "${time.hour % 12 == 0 ? 12 : time.hour % 12} ${time.hour >= 12 ? 'PM' : 'AM'}";
+  //                 // Date string
+  //                 final dateString = "${time.day}/${time.month}";
+  //                 bool showDate = true;
+  //                 // if (lastDate != dateString) {
+  //                 //   showDate = true;
+  //                 //   lastDate = dateString;
+  //                 // }
+  //                 final icon = hour['weather'][0]['icon'];
+  //                 final temp = hour['temp'].toStringAsFixed(1);
+  //
+  //                 return Container(
+  //                   width: 80,
+  //                   margin: const EdgeInsets.all(6),
+  //                   decoration: BoxDecoration(
+  //                     color: Colors.white.withOpacity(0.2),
+  //                     borderRadius: BorderRadius.circular(16),
+  //                   ),
+  //                   child: Column(
+  //                     mainAxisAlignment: MainAxisAlignment.center,
+  //                     children: [
+  //                       if (showDate)
+  //                         Text(dateString, style:  TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w500),),
+  //                       Text(hourString, style: TextStyle(color: Colors.white,fontSize: 14)),
+  //                       SizedBox(height: 5,),
+  //                       Image.network(
+  //                         "https://openweathermap.org/img/wn/$icon.png",
+  //                         height: 40,
+  //                       ),
+  //                       Text("$temp°C", style: const TextStyle(color: Colors.white)),
+  //                     ],
+  //                   ),
+  //                 );
+  //               }),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget forecastItem(String time, IconData icon, String temp) {
     return Column(
@@ -474,6 +572,15 @@ Widget buildCurrentWeather() {
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: ""),
       ],
     );
+  }
+
+  List<Map<String, dynamic>> getNext24Hours(List<dynamic> hourlyData) {
+    final now = DateTime.now();
+    final next24 = now.add(const Duration(hours: 24));
+    return hourlyData.where((hour) {
+      final time = DateTime.fromMillisecondsSinceEpoch(hour['dt'] * 1000);
+      return time.isAfter(now) && time.isBefore(next24);
+    }).map((e) => e as Map<String, dynamic>).toList();
   }
 
 }
