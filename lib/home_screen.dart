@@ -91,6 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (weatherdata != null) {
       var current = weatherdata['current'];
+      var hourly = weatherdata['hourly'];
+      var daily = weatherdata['daily'];
       var tem = current['temp'];
       var condition = current['weather'][0]['description'];
       var humidity = current['humidity'];
@@ -428,8 +430,9 @@ Widget buildCurrentWeather() {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              airConditionItem("Real Feel", "30°"),
-              airConditionItem("Wind", "0.2 km/h"),
+              airConditionItem("Humidity","$_humidity"),
+              airConditionItem("Wind","$_wind_speed"),
+              airConditionItem("Pressure","$_pressure"),
             ],
           ),
           const SizedBox(height: 15),
