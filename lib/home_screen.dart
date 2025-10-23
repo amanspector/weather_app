@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
+import 'package:weather_1/search_screen.dart';
 import 'dart:convert';
 import 'services_api.dart';
 
@@ -94,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
       var current = weatherdata['current'];
       var hourlyData = weatherdata['hourly'];
       var daily = weatherdata['daily'];
+      _weatherData = weatherdata;
       var tem = current['temp'];
       var condition = current['weather'][0]['description'];
       var humidity = current['humidity'];
@@ -452,6 +454,10 @@ Widget buildTodayForecast(){
   }
 
   Widget buildWeeklyForecast() {
+    if (_weatherData == null || _weatherData!['daily'] == null) {
+      return SizedBox(); // Return nothing if data not ready
+    }
+    final daily = _weatherData!['daily'] as List;
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF1E2228),
@@ -469,29 +475,65 @@ Widget buildTodayForecast(){
                 fontWeight: FontWeight.w500),
           ),
           const SizedBox(height: 10),
-          dayForecastItem("Today", Icons.wb_sunny, "36/22"),
-          dayForecastItem("Tue", Icons.wb_sunny, "37/21"),
-          dayForecastItem("Wed", Icons.wb_sunny, "37/21"),
-          dayForecastItem("Thu", Icons.cloud, "37/21"),
-          dayForecastItem("Fri", Icons.cloud, "37/21"),
-          dayForecastItem("Sat", Icons.beach_access, "37/21"),
-          dayForecastItem("Sun", Icons.wb_sunny, "37/21"),
+          Column(
+            children:daily.take(7).map((dayData)
+            {
+              final dt = DateTime.fromMillisecondsSinceEpoch(dayData['dt']*1000);
+              final dayName = getWeekday(dt);
+              final minTemp = dayData['temp']['min'].toStringAsFixed(1);
+              final maxTemp = dayData['temp']['max'].toStringAsFixed(1);
+              final iconCode = dayData['weather'][0]['icon'];
+              final condition = dayData['weather'][0]['main'];
+              return dayForecastItem(dayName, iconCode, condition , "$maxTemp / $minTemp");
+            }).toList(),
+
+          ),
+          // dayForecastItem("Today", Icons.wb_sunny, "36/22"),
+          // dayForecastItem("Tue", Icons.wb_sunny, "37/21"),
+          // dayForecastItem("Wed", Icons.wb_sunny, "37/21"),
+          // dayForecastItem("Thu", Icons.cloud, "37/21"),
+          // dayForecastItem("Fri", Icons.cloud, "37/21"),
+          // dayForecastItem("Sat", Icons.beach_access, "37/21"),
+          // dayForecastItem("Sun", Icons.wb_sunny, "37/21"),
         ],
       ),
     );
   }
 
-  Widget dayForecastItem(String day, IconData icon, String temp) {
+  Widget dayForecastItem(String day, String iconCode,String condition, String temp) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 7),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(day, style: const TextStyle(color: Colors.white70, fontSize: 16)),
-          Icon(icon, color: Colors.yellow),
-          Text(temp,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold)),
+          Expanded(
+            flex: 1,
+            child:
+          Text(day, style: const TextStyle(color: Colors.white70, fontSize: 18)),),
+
+          Expanded(
+            flex: 2,
+            child:
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.network("https://openweathermap.org/img/wn/$iconCode.png",
+                height: 25,),
+              SizedBox(width: 8),
+              Text(condition,style: TextStyle(
+                color: Colors.white,fontWeight: FontWeight.w500
+              ),)
+            ],
+          ),),
+
+          Expanded(flex: 1,
+
+              child: Align(
+                alignment: Alignment.centerRight,
+            child: Text(temp,
+                style: const TextStyle(
+                    color: Colors.white, fontWeight: FontWeight.bold)),
+          ))
         ],
       ),
     );
@@ -559,15 +601,28 @@ Widget buildTodayForecast(){
     );
   }
 
+  int _selectedIndex = 0;
+  void _onNavTapped(int index){
+    setState(() {
+      _selectedIndex = index;
+    });
+    if(index == 1){
+      Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen())
+      );
+    }
+  }
+
   Widget buildBottomNav() {
     return BottomNavigationBar(
       backgroundColor: const Color(0xFF1E2228),
       selectedItemColor: Colors.blueAccent,
       unselectedItemColor: Colors.white70,
       type: BottomNavigationBarType.fixed,
+      currentIndex: _selectedIndex,
+      onTap: _onNavTapped,
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
-        BottomNavigationBarItem(icon: Icon(Icons.list), label: ""),
+        BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
         BottomNavigationBarItem(icon: Icon(Icons.cloud), label: ""),
         BottomNavigationBarItem(icon: Icon(Icons.settings), label: ""),
       ],
@@ -581,6 +636,13 @@ Widget buildTodayForecast(){
       final time = DateTime.fromMillisecondsSinceEpoch(hour['dt'] * 1000);
       return time.isAfter(now) && time.isBefore(next24);
     }).map((e) => e as Map<String, dynamic>).toList();
+  }
+
+  String getWeekday(DateTime date) {
+    const weekdays = [
+      'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'
+    ];
+    return weekdays[date.weekday % 7];
   }
 
 }
