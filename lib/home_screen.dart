@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:weather_1/search_screen.dart';
 import 'dart:convert';
 import 'services_api.dart';
+import 'search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -602,14 +603,20 @@ Widget buildTodayForecast(){
   }
 
   int _selectedIndex = 0;
-  void _onNavTapped(int index){
-    setState(() {
-      _selectedIndex = index;
-    });
+  void _onNavTapped(int index) async{
     if(index == 1){
-      Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen())
+      final selectedCity = await Navigator.push(
+          context, MaterialPageRoute(builder: (context) => SearchScreen())
       );
+      if(selectedCity != null){
+        print("Selected City : $selectedCity");
+      }
+      return;
     }
+    int tabinedx = index >1 ? index - 1 : index;
+    setState(() {
+      _selectedIndex = tabinedx;
+    });
   }
 
   Widget buildBottomNav() {
@@ -618,9 +625,9 @@ Widget buildTodayForecast(){
       selectedItemColor: Colors.blueAccent,
       unselectedItemColor: Colors.white70,
       type: BottomNavigationBarType.fixed,
-      currentIndex: _selectedIndex,
+      currentIndex: _selectedIndex < 1 ? _selectedIndex : _selectedIndex+1,
       onTap: _onNavTapped,
-      items: const [
+      items:[
         BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
         BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
         BottomNavigationBarItem(icon: Icon(Icons.cloud), label: ""),
