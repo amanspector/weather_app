@@ -7,6 +7,35 @@ import 'dart:convert';
 import 'services_api.dart';
 import 'search_screen.dart';
 
+class CityWeather {
+  final String city;
+  final String iconCode; // openweather icon code like '01d'
+  final double temp;
+  final DateTime time;
+
+  CityWeather({
+    required this.city,
+    required this.iconCode,
+    required this.temp,
+    required this.time,
+  });
+
+  Map<String, dynamic> toJson() => {
+    'city': city,
+    'iconCode': iconCode,
+    'temp': temp,
+    'time': time.toIso8601String(),
+  };
+
+  factory CityWeather.fromJson(Map<String,dynamic> j) => CityWeather(
+    city: j['city'],
+    iconCode: j['iconCode'],
+    temp: (j['temp'] as num).toDouble(),
+    time: DateTime.parse(j['time']),
+  );
+}
+
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -15,6 +44,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  List<CityWeather> _myCities = [];
   String _city = "Fetch Location.......";
   String _temperature = "--°C";
   String _condition = "Loading...";
@@ -603,21 +633,41 @@ Widget buildTodayForecast(){
   }
 
   int _selectedIndex = 0;
-  void _onNavTapped(int index) async{
-    if(index == 1){
-      final selectedCity = await Navigator.push(
-          context, MaterialPageRoute(builder: (context) => SearchScreen())
+
+  void _onNavTapped(int index) async {
+    if (index == 1) {
+      // Navigate to SearchScreen
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const SearchScreen()),
       );
-      if(selectedCity != null){
-        print("Selected City : $selectedCity");
+
+      // Check if we received a CityWeather object
+      if (result != null && result is CityWeather) {
+        setState(() {
+          // Avoid duplicates by city name
+          final existingIndex = _myCities.indexWhere(
+                  (c) => c.city.toLowerCase() == result.city.toLowerCase());
+
+          if (existingIndex == -1) {
+            _myCities.insert(0, result); // insert at top
+          } else {
+            // optionally bring existing to top
+            final existing = _myCities.removeAt(existingIndex);
+            _myCities.insert(0, existing);
+          }
+        });
       }
       return;
     }
-    int tabinedx = index >1 ? index - 1 : index;
+
+    // Handle other tabs
+    final tabIndex = index > 1 ? index - 1 : index;
     setState(() {
-      _selectedIndex = tabinedx;
+      _selectedIndex = tabIndex;
     });
   }
+
 
   Widget buildBottomNav() {
     return BottomNavigationBar(
@@ -627,7 +677,7 @@ Widget buildTodayForecast(){
       type: BottomNavigationBarType.fixed,
       currentIndex: _selectedIndex < 1 ? _selectedIndex : _selectedIndex+1,
       onTap: _onNavTapped,
-      items:[
+      items:  [
         BottomNavigationBarItem(icon: Icon(Icons.home), label: ""),
         BottomNavigationBarItem(icon: Icon(Icons.search), label: ""),
         BottomNavigationBarItem(icon: Icon(Icons.cloud), label: ""),
